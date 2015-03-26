@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TESTING</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <div id="questionnaire"></div>
+    <button id="submit">submit</button>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script>
+          
+      var example = '{ "statements" : [' +
+      '{ "statement":"I enjoy the company of people." , "tag":"extreversion" },' +
+      '{ "statement":"I like to spen my spare time alone." , "tag":"intrevertion" },' +
+      '{ "statement":"I do not like having big parties." , "tag":"intrevertion" },' +
+      '{ "statement":"I prefer to work in groups" , "tag":"extreversion" },' +
+      '{ "statement":"I like loud exiting places." , "tag":"extreversion" } ]}';
+      
+      var Q = new likertQuestionnaire(example, "questionnaire");
+      
+      $("#submit").click(function() { //example button
+        var result = Q.getResult(); //get results
+        for (this.i=0; this.i<result.length; this.i++) {// display results
+          alert(result[this.i].tag+" = "+result[this.i].val);
+        }
+        if (result[0].val > result[1].val) {
+          alert('you are an extrevert');
+        } else {
+          alert('you are an intrevert');
+        }
+      });
+      
+      
+      //This function generates a questionnaire based on a JSON with statement/tag objects.
+      //The result array obtained through the getResult method includes all the tags in order of when they were introduced. (starting at index 0)
+      function likertQuestionnaire(dataJSON, idToAppend) { //likertQuestionnaire class
+        var data = JSON.parse(dataJSON);
+        var statements = [];
+        var tags = [];
+        
+        Array.prototype.containsTag = function(v) { //allows tag searching for getResult 
+          for(var i = 0; i < this.length; i++) {
+              if(this[i].tag === v) return true;
+          }
+          return false;
+        };
+        
+        //define variables from JSON
+        tags[0] = {tag: data.statements[0].tag, val: 0}; //make the first tag based on the first statement (the first tag is guaranteed to be unique)
+        for (this.i=0; this.i<data.statements.length; this.i++) { //create every statement from JSON
+          statements[this.i] = new statment(data.statements[this.i].statement, data.statements[this.i].tag, idToAppend, this.i);
+      
+          if (!tags.containsTag(data.statements[this.i].tag)){
+            tags[tags.length] = {tag: data.statements[this.i].tag, val: 0};
+            alert(tags.length);
+          }
+        }
+        
+        this.getResult = function() { //calculate and return the numerical value of each tag
+          for (this.i=0; this.i<tags.length; this.i++) { //whipe previous data
+            tags[this.i].val = 0;
+          }
+          
+          for (this.i=0; this.i<statements.length; this.i++) { 
+            var val = statements[this.i].getResult();
+            
+            var exit = false;
+            for (this.j=0; this.j<tags.length && exit===false; this.j++) { //find the matching tag and add the result value
+              if (statements[this.i].tag === tags[this.j].tag){
+                tags[this.j].val += val;
+                exit=true;
+              }
+            }
+          }
+          return tags; //returns tag/val objects
+        }
+        
+        function statment(statmentString, tag, idToAppend, uniqueId) {
+          this.tag = tag;
+          
+          //creates the html for the question
+          $('#'+idToAppend).append("<div id="+uniqueId+"></div>");
+          $('#'+uniqueId).append("<hr/>");
+          $("#"+uniqueId).css("background-color", "lightGrey");
+          $('#'+uniqueId).append("<p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"+statmentString+"</p>");
+          $('#'+uniqueId).append("<input type='radio' name="+uniqueId+" value='SA'>Strongly Agree <br> <input type='radio' name="+uniqueId+" value='A'>Agree <br> <input type='radio' name="+uniqueId+" value='N' checked>Neutral <br> <input type='radio' name="+uniqueId+" value='D'>Disagree <br> <input type='radio' name="+uniqueId+" value='SD'>Strongly Disagree");
+          $('#'+uniqueId).append("<hr/>");
+      
+          //returns a value based
+          this.getResult = function() { //sends a result in interger form
+            switch ($('input[name='+uniqueId+']:checked').val()) {
+              case "SA":
+                return 2;
+              case "A":
+                return 1;
+              case "N":
+                return 0;
+              case "D":
+                return -1;
+              case "SD":
+                return -2;
+            }
+          }
+        }
+      } //likertQuestionnaire class
+      
+    </script>
+  </body>
+</html>
